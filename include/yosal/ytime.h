@@ -18,8 +18,13 @@ extern "C" {
 #endif
 
 #define YOSAL_MS_PER_SECOND ((uint64_t) 1000LL)
-#define YOSAL_US_PER_SECOND ((uint64_t) 1000000LL)
-#define YOSAL_NS_PER_SECOND ((uint64_t) 1000000000LL)
+#define YOSAL_US_PER_MS     ((uint64_t) 1000LL)
+#define YOSAL_NS_PER_US     ((uint64_t) 1000LL)
+
+#define YOSAL_US_PER_SECOND (YOSAL_US_PER_MS*YOSAL_MS_PER_SECOND)
+#define YOSAL_NS_PER_SECOND (YOSAL_NS_PER_US*YOSAL_US_PER_SECOND)
+
+#define YOSAL_NS_PER_MS     (YOSAL_NS_PER_US*YOSAL_US_PER_MS)
 
 /**
  * @defgroup Ytime
