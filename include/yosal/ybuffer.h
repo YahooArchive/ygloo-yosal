@@ -68,6 +68,22 @@ int
 Ybuffer_append(Ybuffer *stream, const char *buf, int buflen);
 
 /**
+ * Append a formatted string to a Ybuffer stream.
+ *
+ * @param stream Ybuffer to append data to
+ * @param format The printf-style format string.
+ * @param ... Arguments for the format string.
+ *
+ * @return length of appended buffer or -1 on failure
+ */
+int
+Ybuffer_append_format(Ybuffer *stream, const char *format, ...)
+#if defined(__GNUC__)
+  __attribute__ ((format(printf, 2, 3)))
+#endif
+  ;
+
+/**
  * Append an integer to a buffer. The integer is converted to a string before
  * appending it.
  *

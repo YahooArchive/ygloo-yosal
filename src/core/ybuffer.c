@@ -15,6 +15,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "yosal/yosal.h"
 
@@ -145,6 +146,63 @@ Ybuffer_append(Ybuffer *stream, const char *buf, int buflen)
   stream->data[stream->pos] = '\0';
 
   return buflen;
+}
+
+int
+Ybuffer_append_format(Ybuffer *stream, const char *format, ...)
+{
+  va_list ap1;
+  va_list ap2;
+  int rc;
+  int space;
+
+  if (stream == NULL) {
+    return -1;
+  }
+  if (stream->status != YBUFFER_STATUS_OK) {
+    return -1;
+  }
+
+  va_start(ap1, format);
+  va_copy(ap2, ap1);
+  space = stream->datalen - stream->pos;
+  rc = vsnprintf(stream->data + stream->pos, space, format, ap1);
+  if (rc >= space) {
+    /* Re-allocate larger buffer */
+    char *newbuf;
+    int newlen;
+
+    newlen = stream->datalen + stream->dataincr;
+    if (stream->pos + rc >= newlen - 1) {
+      newlen = stream->pos + rc + 1;
+    }
+
+    newbuf = (char*) Ymem_realloc(stream->data, newlen);
+    if (newbuf == NULL) {
+      // Older buffer is still valid.
+      stream->status = YBUFFER_STATUS_ERROR;
+      rc = -1;
+    } else {
+      stream->data = newbuf;
+      stream->datalen = newlen;
+
+      space = stream->datalen - stream->pos;
+      rc = vsnprintf(stream->data + stream->pos, space, format, ap2);
+      if (rc >= space) {
+        // Older buffer is still valid.
+        stream->status = YBUFFER_STATUS_ERROR;
+        rc = -1;
+      }
+    }
+  }
+  va_end(ap2);
+  va_end(ap1);
+
+  if (rc > 0) {
+    stream->pos += rc;
+  }
+
+  return rc;
 }
 
 int
