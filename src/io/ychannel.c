@@ -10,6 +10,7 @@
  * the License. See accompanying LICENSE file.
  */
 
+#define LOG_TAG "yosal::ychannel"
 #include "yosal/yosal.h"
 
 #include <unistd.h>
@@ -176,12 +177,16 @@ YchannelRelease(Ychannel *channel)
 {
   if (channel != NULL) {
     if (channel->rbuf != NULL) {
-      Ymem_free(channel->rbuf);
+      Ymem_free((void*) channel->rbuf);
       channel->rbuf = NULL;
     }
     if (channel->hbuf != NULL) {
-      Ymem_free((void*)channel->hbuf);
+      Ymem_free((void*) channel->hbuf);
       channel->hbuf = NULL;
+    }
+    if (channel->pbuf != NULL) {
+      Ymem_free((void*) channel->pbuf);
+      channel->pbuf = NULL;
     }
     if (channel->releasecb != NULL) {
       channel->releasecb(channel);
@@ -258,15 +263,17 @@ YchannelReadDirect(Ychannel *channel, void *buf, int nbytes)
 }
 
 static const char*
-YchannelFetchData(Ychannel *channel, int nbytes, int *olengthptr, int doread)
+YchannelFetchData(Ychannel *channel, int rbytes, int *olengthptr, int doread)
 {
   const char *result = NULL;
   int olength = 0;
+  int nbytes;
 
   if (!YchannelReadable(channel)) {
     return NULL;
   }
 
+  nbytes = rbytes;
   if (nbytes < 0) {
     nbytes = 0;
   }
@@ -307,6 +314,8 @@ YchannelFetchData(Ychannel *channel, int nbytes, int *olengthptr, int doread)
           channel->rbuf = Ymem_malloc(INPUT_BUF_SIZE);
           if (channel->rbuf != NULL) {
             channel->rsize = INPUT_BUF_SIZE;
+          } else {
+            channel->rsize = 0;
           }
         }
 
@@ -336,6 +345,8 @@ YchannelFetchData(Ychannel *channel, int nbytes, int *olengthptr, int doread)
     *olengthptr = olength;
   }
 
+  ALOGV("Fetched %d/%d bytes", olength, rbytes);
+
   channel->incount += olength;
 
   return result;
@@ -358,7 +369,7 @@ YchannelRead(Ychannel *channel, void *buf, int toread)
   int directio;
 
   if (!YchannelReadable(channel)) {
-    return 1;
+    return 0;
   }
 
   if (toread <= 0) {
@@ -386,7 +397,7 @@ YchannelRead(Ychannel *channel, void *buf, int toread)
     return nbytes;
   }
 
-  /* If it is safe to do direct I/O if all internal buffers are empty */
+  /* If it is safe to do direct I/O if all internal buffers are empty or fully consumed */
   directio = YFALSE;
   if ( (nextc != NULL) &&
        (channel->plength <= 0 || channel->ppos >= channel->plength) &&
@@ -402,6 +413,7 @@ YchannelRead(Ychannel *channel, void *buf, int toread)
       if (chunklen <= 0) {
         break;
       }
+      nextc += chunklen;
       toread -= chunklen;
       nbytes += chunklen;
     }
@@ -431,6 +443,59 @@ int
 YchannelSkip(Ychannel *channel, int nbytes)
 {
   return YchannelRead(channel, NULL, nbytes);
+}
+
+int
+YchannelPush(Ychannel *channel, const char *data, int n)
+{
+  char *buffer;
+  int bufferlen;
+  int preserve = 0;
+
+  if (!YchannelReadable(channel)) {
+    return 0;
+  }
+
+  if (n <= 0) {
+    return 0;
+  }
+
+  if (n > channel->incount) {
+    ALOGV("Trying to push %d bytes in a channel at offset %llu",
+          n, (unsigned long long) channel->incount);
+    /* Since the push-back buffer is allocated dynamically, push can still succeed */
+  }
+
+  /* Number of bytes to keep from previous push-back request */
+  preserve = 0;
+  if (channel->plength > 0 && channel->ppos < channel->plength) {
+    preserve = channel->plength - channel->ppos;
+  }
+
+  bufferlen = preserve + n;
+  buffer = (char*) Ymem_malloc(bufferlen);
+  if (buffer == NULL) {
+    return 0;
+  }
+
+  memcpy(buffer, data, n);
+  if (preserve > 0) {
+    memcpy(buffer + n, channel->pbuf + channel->ppos, preserve);
+  }
+
+  if (channel->pbuf != NULL) {
+    Ymem_free((void*) channel->pbuf);
+  }
+  channel->pbuf = buffer;
+  channel->ppos = 0;
+  channel->plength = bufferlen;
+  if (n < channel->incount) {
+    channel->incount = channel->incount - n;
+  } else {
+    channel->incount = 0;
+  }
+
+  return n;
 }
 
 int

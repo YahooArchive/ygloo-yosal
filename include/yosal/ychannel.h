@@ -304,6 +304,18 @@ int
 YchannelSkip(Ychannel *channel, int n);
 
 /**
+ * Push bytes pack into the input stream
+ *
+ * @param channel
+ * @param data pointer to byte array to push back into stream
+ * @param n number of bytes to push back
+ *
+ * @return number of bytes that were actually pushed back into stream
+ */
+int
+YchannelPush(Ychannel *channel, const char *data, int n);
+
+/**
  * Read nbytes from a Ychannel. Same as fetch, but the memory being returend is
  * owned and has to be freed by the caller. The caller has to ensure that the
  * size of buf is greater or equal to nbytes.
