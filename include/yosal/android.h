@@ -96,7 +96,10 @@ jniutils_registerNativeMethods(JNIEnv* env, const char* className,
 			       JNINativeMethod* gMethods, int numMethods);
 
 int
-jninative_findFields(JNIEnv *env, struct field *fields, int count);
+jniutils_findFields(JNIEnv *env, struct field *fields, int count);
+
+jstring
+jniutils_NewStringUTF(JNIEnv* _env, const char *data);
 
 #ifdef __cplusplus
 };
