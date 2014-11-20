@@ -235,6 +235,10 @@ int Ydigest_hex(Ydigest *context, char *out)
   len = context->length;
   if (len <= 0) {
     hmaclen = 0;
+  } else if (len > YOSAL_DIGEST_LENGTH) {
+    /* Static analyzer in GCC 4.9+ emits warning about potential out of bounds access to digest[].
+       Make it explicit that this never happens */
+    hmaclen = 0;
   } else {
     hmaclen = 2 * len + 1;
     if (out != NULL) {
