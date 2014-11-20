@@ -499,10 +499,10 @@ YchannelPush(Ychannel *channel, const char *data, int n)
 }
 
 int
-YchannelWrite(Ychannel *channel, void *buf, int towrite)
+YchannelWrite(Ychannel *channel, const void *buf, int towrite)
 {
   jint written;
-  char *nextc;
+  const char *nextc;
   int nbytes;
 
   if (!YchannelWritable(channel)) {

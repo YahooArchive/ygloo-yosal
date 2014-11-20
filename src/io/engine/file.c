@@ -46,7 +46,7 @@ YchannelFileRead(Ychannel *channel, void *readbuf, int nbytes)
 }
 
 static int
-YchannelFileWrite(Ychannel *channel, void *buf, int nbytes)
+YchannelFileWrite(Ychannel *channel, const void *buf, int nbytes)
 {
   YchannelFile *engine;
   size_t n;

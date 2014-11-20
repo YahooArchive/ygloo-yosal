@@ -70,7 +70,7 @@ typedef int (*YchannelReadCB)(Ychannel *channel, void *readbuf, int nbytes);
  *
  * @return number of bytes written or -1 on error
  */
-typedef int (*YchannelWriteCB)(Ychannel *channel, void *buf, int towrite);
+typedef int (*YchannelWriteCB)(Ychannel *channel, const void *buf, int towrite);
 
 /**
  * Callback that is used to flush a Ychannel. After this function returns
@@ -339,7 +339,7 @@ YchannelRead(Ychannel *channel, void *buf, int nbytes);
  * @return number of bytes actually written
  */
 int
-YchannelWrite(Ychannel *channel, void *buf, int towrite);
+YchannelWrite(Ychannel *channel, const void *buf, int towrite);
 
 /**
  * Flush a Ychannel, @see YchannelFlushCB

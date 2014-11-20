@@ -162,7 +162,7 @@ YchannelJavaStreamRead(Ychannel *channel, void *readbuf, int nbytes)
 }
 
 static int
-YchannelJavaStreamWrite(Ychannel *channel, void *buf, int nbytes)
+YchannelJavaStreamWrite(Ychannel *channel, const void *buf, int nbytes)
 {
   YchannelJavaStream *engine;
   jint towrite;

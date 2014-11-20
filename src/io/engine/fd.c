@@ -57,7 +57,7 @@ YchannelFdRead(Ychannel *channel, void *readbuf, int nbytes)
 }
 
 static int
-YchannelFdWrite(Ychannel *channel, void *buf, int nbytes)
+YchannelFdWrite(Ychannel *channel, const void *buf, int nbytes)
 {
   YchannelFd *engine;
   ssize_t n;
